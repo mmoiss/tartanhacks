@@ -20,9 +20,9 @@ class Settings(BaseSettings):
     github_app_private_key: str = Field(
         validation_alias=AliasChoices("github_app_private_key", "github_private_key"),
     )
-    frontend_url: str = "http://localhost:3000"
-    database_url: str = "sqlite:///./patchwork.db"
-    session_secret: str = ""
+    frontend_url: str
+    database_url: str
+    session_secret: str
 
     model_config = {"env_file": str(ENV_FILE), "extra": "ignore"}
 

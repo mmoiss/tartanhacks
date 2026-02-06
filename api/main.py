@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.config import settings
 from api.database import engine, Base
+from api.models import User, Session, App, Deployment, Incident, Analysis, PullRequest  # noqa: F401
 from api.routers.auth.github import router as github_login_router
 from api.routers.auth.callback import router as github_callback_router
 from api.routers.user.me import router as me_router
