@@ -22,12 +22,14 @@ async def github_callback(code: str, state: str | None = None, db: DBSession = D
     user = db.query(User).filter(User.github_id == github_user["id"]).first()
     if user:
         user.username = github_user["login"]
+        user.email = github_user.get("email")
         user.avatar_url = github_user.get("avatar_url")
         user.access_token = access_token
     else:
         user = User(
             github_id=github_user["id"],
             username=github_user["login"],
+            email=github_user.get("email"),
             avatar_url=github_user.get("avatar_url"),
             access_token=access_token,
         )
@@ -40,4 +42,4 @@ async def github_callback(code: str, state: str | None = None, db: DBSession = D
     db.commit()
     db.refresh(session)
 
-    return RedirectResponse(url=f"{settings.frontend_url}?session={session.token}")
+    return RedirectResponse(url=f"{settings.frontend_url}?session={session.session_token}")
