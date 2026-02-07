@@ -35,13 +35,16 @@ Steps:
    - `global-error.tsx` (or `src/app/global-error.tsx`) — must send errors to `{webhook_url}` with the same webhook_key
 
    If ALL three mechanisms already exist with the correct webhook_url and webhook_key, instrumentation is already complete. In that case:
-   - Do NOT create a branch, do NOT create any files, do NOT open a PR.
+   - Do NOT create a branch, do NOT create any files, do NOT create any commits, do NOT open a PR.
+   - This skip is ONLY valid because ZERO commits were made and ZERO files were changed.
    - Output this exact line and stop:
      SANOS_ALREADY_INSTRUMENTED=true
    - Do NOT output anything else after that line.
+   - The system will skip straight to Vercel deployment since no code review is needed.
 
-   If any of the three are missing or point to a wrong URL/key, proceed with the full integration below.
+   If any of the three are missing or point to a wrong URL/key, you MUST proceed with the full integration below.
    When proceeding, you are creating exactly THREE files and modifying ONE existing file. No more, no less.
+   A pull request is MANDATORY whenever any files are changed — the user must review and merge it before deployment can proceed.
 
 1. Detect the project structure: try to get the file `src/app/layout.tsx`.
    - If it EXISTS → this is a **src/-based** project. Remember the layout path as `src/app/layout.tsx`.
