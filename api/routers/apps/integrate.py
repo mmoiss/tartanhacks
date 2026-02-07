@@ -4,6 +4,7 @@ import traceback
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session as DBSession
 
+from api.config import settings
 from api.database import SessionLocal, get_db
 from api.models.app import App
 from api.models.user import User
@@ -13,7 +14,7 @@ from api.services.dedalus_service import run_dedalus_agent
 router = APIRouter()
 
 
-async def _run_integration(app_id: int, github_token: str, webhook_key: str, repo_owner: str, repo_name: str):
+async def _run_integration(app_id: int, github_token: str, webhook_key: str, repo_owner: str, repo_name: str, webhook_url: str):
     db = SessionLocal()
     try:
         app = db.query(App).filter(App.id == app_id).first()
@@ -62,7 +63,7 @@ export async function onRequestError(
     renderType: "dynamic" | "dynamic-resume";
   }}
 ) {{
-  await fetch("http://localhost:8000/api/webhooks/logs", {{
+  await fetch("{webhook_url}", {{
     method: "POST",
     headers: {{ "Content-Type": "application/json" }},
     body: JSON.stringify({{
@@ -106,7 +107,7 @@ export default function SanosReporter() {{
         stack_trace: stack || null,
       }});
       navigator.sendBeacon(
-        "http://localhost:8000/api/webhooks/logs",
+        "{webhook_url}",
         new Blob([payload], {{ type: "application/json" }})
       );
     }}
@@ -161,7 +162,7 @@ export default function GlobalError({{
       stack_trace: error.stack || null,
     }});
     navigator.sendBeacon(
-      "http://localhost:8000/api/webhooks/logs",
+      "{webhook_url}",
       new Blob([payload], {{ type: "application/json" }})
     );
   }}
@@ -244,6 +245,8 @@ async def integrate_app(
     if not github_token:
         raise HTTPException(status_code=401, detail="No GitHub access token")
 
+    webhook_url = f"{settings.frontend_url.rstrip('/')}/api/webhooks/logs"
+
     background_tasks.add_task(
         _run_integration,
         app_id=app.id,
@@ -251,6 +254,7 @@ async def integrate_app(
         webhook_key=app.webhook_key,
         repo_owner=app.repo_owner,
         repo_name=app.repo_name,
+        webhook_url=webhook_url,
     )
 
     return {"status": "integrating", "pipeline_step": "integrating"}

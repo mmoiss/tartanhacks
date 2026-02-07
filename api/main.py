@@ -3,6 +3,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from sqlalchemy import inspect, text
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -22,6 +23,21 @@ from api.routers.incidents.analyze import router as incidents_router
 from api.routers.webhooks.vercel import router as vercel_webhook_router
 
 Base.metadata.create_all(bind=engine)
+
+# Migrate missing columns that create_all won't add to existing tables
+with engine.connect() as conn:
+    inspector = inspect(engine)
+    for table_name, table in Base.metadata.tables.items():
+        if not inspector.has_table(table_name):
+            continue
+        existing_cols = {c["name"] for c in inspector.get_columns(table_name)}
+        for col in table.columns:
+            if col.name not in existing_cols:
+                col_type = col.type.compile(engine.dialect)
+                conn.execute(text(
+                    f'ALTER TABLE {table_name} ADD COLUMN "{col.name}" {col_type}'
+                ))
+    conn.commit()
 
 app = FastAPI(title="Sanos API")
 
