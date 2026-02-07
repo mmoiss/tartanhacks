@@ -11,6 +11,7 @@
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "api/main.py" },
+    { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "front-end/$1" }
   ]
 }
