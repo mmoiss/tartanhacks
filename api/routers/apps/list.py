@@ -203,25 +203,36 @@ async def get_app_status(
         }
 
     # Check if PR has been merged (GitHub API)
-    if app.pipeline_step == "pr_created" and app.pr_number:
-        try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                gh_res = await client.get(
-                    f"https://api.github.com/repos/{app.repo_owner}/{app.repo_name}/pulls/{app.pr_number}",
-                    headers={
-                        "Authorization": f"Bearer {user.access_token}",
-                        "Accept": "application/vnd.github.v3+json",
-                    },
-                )
-                if gh_res.status_code == 200:
-                    pr_data = gh_res.json()
-                    if pr_data.get("merged"):
-                        app.pipeline_step = "pr_merged"
-                        app.instrumented = True
-                        db.commit()
-                        db.refresh(app)
-        except Exception:
-            pass
+    if app.pipeline_step == "pr_created":
+        # Try to recover pr_number from pr_url if missing
+        pr_num = app.pr_number
+        if not pr_num and app.pr_url:
+            import re
+            m = re.search(r"/pull/(\d+)", app.pr_url)
+            if m:
+                pr_num = int(m.group(1))
+                app.pr_number = pr_num
+                db.commit()
+
+        if pr_num:
+            try:
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    gh_res = await client.get(
+                        f"https://api.github.com/repos/{app.repo_owner}/{app.repo_name}/pulls/{pr_num}",
+                        headers={
+                            "Authorization": f"Bearer {user.access_token}",
+                            "Accept": "application/vnd.github.v3+json",
+                        },
+                    )
+                    if gh_res.status_code == 200:
+                        pr_data = gh_res.json()
+                        if pr_data.get("merged"):
+                            app.pipeline_step = "pr_merged"
+                            app.instrumented = True
+                            db.commit()
+                            db.refresh(app)
+            except Exception:
+                pass
 
     # If already terminal, return cached status
     if app.status in ("ready", "error", "canceled") and app.pipeline_step in ("ready", "error", None):

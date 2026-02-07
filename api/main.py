@@ -19,6 +19,7 @@ from api.routers.apps.integrate import router as integrate_router
 from api.routers.deploy.create import router as deploy_router
 from api.routers.webhooks.logs import router as webhooks_router
 from api.routers.incidents.analyze import router as incidents_router
+from api.routers.webhooks.vercel import router as vercel_webhook_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -42,6 +43,7 @@ app.include_router(integrate_router, prefix="/api")
 app.include_router(deploy_router, prefix="/api")
 app.include_router(webhooks_router, prefix="/api")
 app.include_router(incidents_router, prefix="/api")
+app.include_router(vercel_webhook_router, prefix="/api")
 
 
 @app.get("/api/healthcheck")

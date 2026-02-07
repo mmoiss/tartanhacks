@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session as DBSession
+import httpx
 
 from api.utils.auth import get_current_user
 from api.services.github_service import get_user_repos
@@ -39,13 +40,21 @@ async def update_settings(
 
 @router.get("/me/repos")
 async def me_repos(user=Depends(get_current_user)):
-    repos = await get_user_repos(user.access_token)
-    return [
-        {
-            "full_name": r["full_name"],
-            "name": r["name"],
-            "private": r["private"],
-            "url": r["html_url"],
-        }
-        for r in repos
-    ]
+    try:
+        repos = await get_user_repos(user.access_token)
+        return [
+            {
+                "full_name": r["full_name"],
+                "name": r["name"],
+                "private": r["private"],
+                "url": r["html_url"],
+            }
+            for r in repos
+        ]
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 401:
+            raise HTTPException(
+                status_code=401,
+                detail="GitHub token expired. Please log in again."
+            )
+        raise HTTPException(status_code=e.response.status_code, detail=str(e))
