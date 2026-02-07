@@ -50,7 +50,6 @@ async def connect_app(
     full_name = body.get("full_name", "")
     parts = full_name.split("/", 1)
     if len(parts) != 2 or not parts[0] or not parts[1]:
-        from fastapi import HTTPException
         raise HTTPException(status_code=400, detail="Invalid repository name, expected owner/repo")
 
     repo_owner, repo_name = parts
@@ -71,8 +70,12 @@ async def connect_app(
 
     app = App(user_id=user.id, repo_owner=repo_owner, repo_name=repo_name, status="pending")
     db.add(app)
-    db.commit()
-    db.refresh(app)
+    try:
+        db.commit()
+        db.refresh(app)
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to save app, please try again")
 
     return {
         "id": app.id,
@@ -91,7 +94,6 @@ async def disconnect_app(
 ):
     app = db.query(App).filter(App.id == app_id, App.user_id == user.id).first()
     if not app:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="App not found")
 
     db.delete(app)

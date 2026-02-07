@@ -8,3 +8,8 @@ __pycache__
 node_modules/
 *.db
 data/
+api/package.json
+package-lock.json
+package.json
+api/package-lock.json
+front-end/lint.txt
