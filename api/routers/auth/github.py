@@ -14,6 +14,6 @@ async def github_login():
     params = (
         f"client_id={settings.github_app_client_id}"
         f"&state={state}"
-        f"&scope=read:user"
+        f"&scope=read:user,repo"
     )
     return RedirectResponse(url=f"https://github.com/login/oauth/authorize?{params}")
