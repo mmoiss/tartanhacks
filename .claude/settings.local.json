@@ -3,7 +3,8 @@
     "allow": [
       "Bash(wc:*)",
       "Bash(powershell -Command:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(npx next build:*)"
     ]
   }
 }
