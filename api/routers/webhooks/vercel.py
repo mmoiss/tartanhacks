@@ -107,6 +107,11 @@ async def vercel_webhook(
         if not app:
             return {"status": "ignored", "reason": "app not found"}
 
+        # Skip build-error auto-fix during initial deployment (setup pipeline).
+        # The first deploy is assumed to always build successfully.
+        if app.pipeline_step in ("deploying", "pr_merged", "pr_created", "integrating", "pending"):
+            return {"status": "ignored", "reason": "initial deployment — skipping auto-fix"}
+
         user = db.query(User).filter(User.id == app.user_id).first()
         if not user or not user.access_token:
             return {"status": "ignored", "reason": "no github token"}
