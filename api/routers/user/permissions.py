@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 
 from api.models.user import User
+from api.services.github_service import get_installation_repos, get_user_installations
 from api.utils.auth import get_current_user
-from api.services.github_service import get_user_installations, get_installation_repos
 
 router = APIRouter()
 

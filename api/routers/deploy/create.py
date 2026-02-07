@@ -1,20 +1,23 @@
-from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
-import httpx
-from sqlalchemy.orm import Session as DBSession
 import re
 
+import httpx
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy.orm import Session as DBSession
+
 from api.config import settings
-from api.models.user import User
-from api.models.app import App
 from api.database import get_db
+from api.models.app import App
+from api.models.user import User
 from api.utils.auth import get_current_user
 
 router = APIRouter()
 
+
 class DeploymentRequest(BaseModel):
     repo_name: str  # Format: "owner/repo"
-    branch: str | None = None  # Optional - will use repo's default branch if not specified
+    branch: str | None = None
+
 
 class DeploymentResponse(BaseModel):
     success: bool
@@ -120,7 +123,7 @@ async def create_deployment(
         except httpx.RequestError as e:
             raise HTTPException(status_code=500, detail=f"Vercel API request failed: {str(e)}")
 
-        # 3. Create Deployment
+        # 3. Create Deployment (retry once if the request exceeds 90 seconds)
         deployment_payload = {
             "name": project_name,
             "gitSource": {
@@ -132,28 +135,37 @@ async def create_deployment(
             "target": "production"
         }
 
-        try:
-            deployment_response = await client.post(
-                "https://api.vercel.com/v13/deployments?skipAutoDetectionConfirmation=1",
-                headers=vercel_headers,
-                json=deployment_payload
-            )
-
-            if deployment_response.status_code not in [200, 201]:
-                error_text = deployment_response.text
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Failed to create Vercel deployment: {error_text}"
+        deployment_data = None
+        max_attempts = 2
+        for attempt in range(max_attempts):
+            try:
+                deployment_response = await client.post(
+                    "https://api.vercel.com/v13/deployments?skipAutoDetectionConfirmation=1",
+                    headers=vercel_headers,
+                    json=deployment_payload,
+                    timeout=90.0,
                 )
 
-            deployment_data = deployment_response.json()
+                if deployment_response.status_code not in [200, 201]:
+                    error_text = deployment_response.text
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"Failed to create Vercel deployment: {error_text}"
+                    )
 
-            inspector_url = deployment_data.get("inspectorUrl")
+                deployment_data = deployment_response.json()
+                break
 
-        except httpx.TimeoutException:
-            raise HTTPException(status_code=504, detail="Vercel deployment request timed out")
-        except httpx.RequestError as e:
-            raise HTTPException(status_code=500, detail=f"Vercel deployment request failed: {str(e)}")
+            except httpx.TimeoutException:
+                if attempt < max_attempts - 1:
+                    continue
+                raise HTTPException(status_code=504, detail="Vercel deployment request timed out after retries")
+            except httpx.RequestError as e:
+                if attempt < max_attempts - 1:
+                    continue
+                raise HTTPException(status_code=500, detail=f"Vercel deployment request failed: {str(e)}")
+
+        inspector_url = deployment_data.get("inspectorUrl")
 
         # 3b. Get the project's stable production domain via the domains endpoint
         try:

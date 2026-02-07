@@ -4,12 +4,14 @@
 .claude
 
 __pycache__
+*.db
 
 node_modules/
-*.db
+.next/
+
 data/
 api/package.json
-package-lock.json
-package.json
 api/package-lock.json
+package.json
+package-lock.json
 front-end/lint.txt
