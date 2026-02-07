@@ -1,14 +1,14 @@
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session as DBSession
-import httpx
 
 from api.config import settings
 from api.database import get_db
-from api.models.user import User
 from api.models.app import App
-from api.models.incident import Incident, Analysis
-from api.utils.auth import get_current_user
+from api.models.incident import Analysis, Incident
+from api.models.user import User
 from api.services.github_service import get_repo_details
+from api.utils.auth import get_current_user
 
 router = APIRouter()
 

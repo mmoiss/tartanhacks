@@ -1,17 +1,17 @@
 import re
 import traceback
+from datetime import datetime, timezone
 
 import httpx
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session as DBSession
-from datetime import datetime, timezone
 
 from api.database import SessionLocal, get_db
 from api.models.app import App
-from api.models.incident import Incident, Analysis
+from api.models.incident import Analysis, Incident
 from api.models.user import User
-from api.utils.auth import get_current_user
 from api.services.dedalus_service import run_dedalus_agent
+from api.utils.auth import get_current_user
 
 router = APIRouter()
 

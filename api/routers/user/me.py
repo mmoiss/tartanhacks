@@ -1,11 +1,11 @@
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session as DBSession
-import httpx
 
-from api.utils.auth import get_current_user
-from api.services.github_service import get_user_repos
 from api.database import get_db
+from api.services.github_service import get_user_repos
+from api.utils.auth import get_current_user
 
 router = APIRouter()
 
