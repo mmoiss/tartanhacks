@@ -160,6 +160,7 @@ function Dashboard() {
     const token = localStorage.getItem("session");
     if (!token) return;
     setConnectingRepo(fullName);
+    const isFirstProject = apps.length === 0;
     try {
       // 1. Connect the repo (creates App in DB)
       const connectRes = await fetch(`${API_BASE}/apps/connect`, {
@@ -183,16 +184,30 @@ function Dashboard() {
         body: JSON.stringify({ repo_name: fullName }),
       });
 
-      const appId = connectData.id;
-      if (deployRes.ok) {
-        const deployData = await deployRes.json();
-        if (deployData.app_id) {
-          router.push(`/dashboard/${deployData.app_id}`);
-          return;
-        }
+      const appId = deployRes.ok
+        ? ((await deployRes.json()).app_id ?? connectData.id)
+        : connectData.id;
+
+      // Only auto-navigate for the user's very first project
+      if (isFirstProject) {
+        router.push(`/dashboard/${appId}`);
+        return;
       }
-      // Fallback: redirect using connect response id
-      router.push(`/dashboard/${appId}`);
+
+      // Otherwise, add the new app to the list and stay on the dashboard
+      const newApp: AppEntry = {
+        id: appId,
+        repo_owner: connectData.repo_owner ?? fullName.split("/")[0],
+        repo_name: connectData.repo_name ?? fullName.split("/")[1],
+        full_name: connectData.full_name ?? fullName,
+        status: connectData.status ?? "pending",
+        private: connectData.private ?? false,
+        live_url: connectData.live_url ?? null,
+        instrumented: connectData.instrumented ?? false,
+        created_at: connectData.created_at ?? null,
+      };
+      setApps((prev) => [...prev, newApp]);
+      setShowRepoDialog(false);
     } finally {
       setConnectingRepo(null);
     }
