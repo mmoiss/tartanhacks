@@ -1,9 +1,16 @@
 {
-  "buildCommand": "cd front-end && npm run build",
-  "outputDirectory": "front-end/.next",
-  "installCommand": "cd front-end && npm install",
-  "framework": "nextjs",
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/main.py" }
+  "builds": [
+    {
+      "src": "front-end/package.json",
+      "use": "@vercel/next"
+    },
+    {
+      "src": "api/main.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "api/main.py" },
+    { "src": "/(.*)", "dest": "front-end/$1" }
   ]
 }
