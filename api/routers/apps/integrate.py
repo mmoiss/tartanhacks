@@ -28,23 +28,9 @@ Repository: {repo_owner}/{repo_name}
 CRITICAL RULES:
 - If the project uses a `src/` directory (i.e. `src/app/` exists), ALL new files go inside `src/`. You must NEVER create a root-level `app/` directory. Next.js prioritizes root `app/` over `src/app/`, which causes all routes to 404.
 
+A pull request is ALWAYS required. The user MUST review and merge it on GitHub before deployment can proceed. You must NEVER skip creating the PR.
+
 Steps:
-0. **Pre-check for existing instrumentation.** Before creating anything, check whether the repository ALREADY has viable Sanos error monitoring. Look for these files on the default branch (`main`, or `master` if `main` doesn't exist):
-   - `instrumentation.ts` (or `src/instrumentation.ts`) — must contain an `onRequestError` export that POSTs to `{webhook_url}` with `webhook_key: "{webhook_key}"`
-   - A client-side reporter component (e.g. `sanos-reporter.tsx` or similar under `app/components/` or `src/app/components/`) — must send errors to `{webhook_url}` with the same webhook_key
-   - `global-error.tsx` (or `src/app/global-error.tsx`) — must send errors to `{webhook_url}` with the same webhook_key
-
-   If ALL three mechanisms already exist with the correct webhook_url and webhook_key, instrumentation is already complete. In that case:
-   - Do NOT create a branch, do NOT create any files, do NOT create any commits, do NOT open a PR.
-   - This skip is ONLY valid because ZERO commits were made and ZERO files were changed.
-   - Output this exact line and stop:
-     SANOS_ALREADY_INSTRUMENTED=true
-   - Do NOT output anything else after that line.
-   - The system will skip straight to Vercel deployment since no code review is needed.
-
-   If any of the three are missing or point to a wrong URL/key, you MUST proceed with the full integration below.
-   When proceeding, you are creating exactly THREE files and modifying ONE existing file. No more, no less.
-   A pull request is MANDATORY whenever any files are changed — the user must review and merge it before deployment can proceed.
 
 1. Detect the project structure: try to get the file `src/app/layout.tsx`.
    - If it EXISTS → this is a **src/-based** project. Remember the layout path as `src/app/layout.tsx`.
@@ -217,16 +203,8 @@ Replace NUMBER with the ACTUAL PR number you just created (do NOT use a placehol
             result = await run_dedalus_agent(github_token, prompt)
             agent_output = result.get("agent_output", "")
 
-            # Check if the agent detected existing instrumentation
-            if "SANOS_ALREADY_INSTRUMENTED=true" in agent_output:
-                print(f"[Integration] Repo {repo_owner}/{repo_name} already instrumented, skipping PR")
-                app.pipeline_step = "pr_merged"
-                app.instrumented = True
-                db.commit()
-                return
-
             # Parse PR URL — match the exact GitHub PR URL pattern
-            # This handles any format: SANOS_PR=url, PR_URL: url, or bare url
+            # A PR is ALWAYS required. The user must review and merge it.
             pr_match = re.search(
                 r"https://github\.com/[A-Za-z0-9_.\-]+/[A-Za-z0-9_.\-]+/pull/(\d+)",
                 agent_output,
@@ -235,10 +213,11 @@ Replace NUMBER with the ACTUAL PR number you just created (do NOT use a placehol
             if pr_match:
                 app.pr_url = pr_match.group(0)
                 app.pr_number = int(pr_match.group(1))
+                app.pipeline_step = "pr_created"
             else:
                 print(f"[Integration Warning] Could not parse PR URL from agent output: {agent_output[-500:]}")
+                app.pipeline_step = "error"
 
-            app.pipeline_step = "pr_created"
             db.commit()
         except Exception as e:
             print(f"[Integration Error] {type(e).__name__}: {e}")
