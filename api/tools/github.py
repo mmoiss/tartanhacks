@@ -1,0 +1,124 @@
+"""GitHub tool functions for Dedalus runner.
+
+Each tool interacts with the GitHub REST API using the user's OAuth token.
+Call `make_github_tools(token)` to get a list of bound tool functions.
+"""
+
+import base64
+import json
+from typing import Callable
+
+import httpx
+
+GITHUB_API = "https://api.github.com"
+
+
+def make_github_tools(github_token: str) -> list[Callable]:
+    """Return a list of tool functions bound to the given GitHub token."""
+
+    headers = {
+        "Authorization": f"token {github_token}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+
+    def get_file_content(owner: str, repo: str, path: str, ref: str = "main") -> str:
+        """Get the contents of a file from a GitHub repository. Returns the decoded file content and its SHA."""
+        r = httpx.get(
+            f"{GITHUB_API}/repos/{owner}/{repo}/contents/{path}",
+            headers=headers,
+            params={"ref": ref},
+        )
+        r.raise_for_status()
+        data = r.json()
+        content = base64.b64decode(data["content"]).decode()
+        return json.dumps({"content": content, "sha": data["sha"], "path": data["path"]})
+
+    def create_branch(owner: str, repo: str, new_branch: str, source_branch: str = "main") -> str:
+        """Create a new branch in a GitHub repository from an existing branch."""
+        # Get the SHA of the source branch
+        r = httpx.get(
+            f"{GITHUB_API}/repos/{owner}/{repo}/git/ref/heads/{source_branch}",
+            headers=headers,
+        )
+        r.raise_for_status()
+        sha = r.json()["object"]["sha"]
+
+        # Create the new branch
+        r = httpx.post(
+            f"{GITHUB_API}/repos/{owner}/{repo}/git/refs",
+            headers=headers,
+            json={"ref": f"refs/heads/{new_branch}", "sha": sha},
+        )
+        r.raise_for_status()
+        return json.dumps({"message": f"Branch '{new_branch}' created from '{source_branch}'", "sha": sha})
+
+    def update_file(owner: str, repo: str, path: str, content: str, message: str, branch: str, sha: str) -> str:
+        """Update an existing file in a GitHub repository. Requires the file's current SHA."""
+        encoded = base64.b64encode(content.encode()).decode()
+        r = httpx.put(
+            f"{GITHUB_API}/repos/{owner}/{repo}/contents/{path}",
+            headers=headers,
+            json={
+                "message": message,
+                "content": encoded,
+                "sha": sha,
+                "branch": branch,
+            },
+        )
+        r.raise_for_status()
+        data = r.json()
+        return json.dumps({
+            "message": f"File '{path}' updated on branch '{branch}'",
+            "commit_sha": data["commit"]["sha"],
+        })
+
+    def create_file(owner: str, repo: str, path: str, content: str, message: str, branch: str) -> str:
+        """Create a new file in a GitHub repository."""
+        encoded = base64.b64encode(content.encode()).decode()
+        r = httpx.put(
+            f"{GITHUB_API}/repos/{owner}/{repo}/contents/{path}",
+            headers=headers,
+            json={
+                "message": message,
+                "content": encoded,
+                "branch": branch,
+            },
+        )
+        r.raise_for_status()
+        data = r.json()
+        return json.dumps({
+            "message": f"File '{path}' created on branch '{branch}'",
+            "commit_sha": data["commit"]["sha"],
+        })
+
+    def list_commits(owner: str, repo: str, branch: str = "main", per_page: int = 5) -> str:
+        """List recent commits on a branch of a GitHub repository."""
+        r = httpx.get(
+            f"{GITHUB_API}/repos/{owner}/{repo}/commits",
+            headers=headers,
+            params={"sha": branch, "per_page": per_page},
+        )
+        r.raise_for_status()
+        commits = [
+            {"sha": c["sha"][:7], "message": c["commit"]["message"], "author": c["commit"]["author"]["name"]}
+            for c in r.json()
+        ]
+        return json.dumps(commits)
+
+    def create_pull_request(owner: str, repo: str, title: str, head: str, base: str = "main", body: str = "") -> str:
+        """Create a pull request in a GitHub repository."""
+        r = httpx.post(
+            f"{GITHUB_API}/repos/{owner}/{repo}/pulls",
+            headers=headers,
+            json={"title": title, "head": head, "base": base, "body": body},
+        )
+        r.raise_for_status()
+        data = r.json()
+        return json.dumps({
+            "message": f"Pull request #{data['number']} created",
+            "url": data["html_url"],
+            "number": data["number"],
+        })
+
+    return [get_file_content, create_branch, update_file, create_file, list_commits, create_pull_request]
