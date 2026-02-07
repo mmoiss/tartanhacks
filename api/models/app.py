@@ -22,6 +22,7 @@ class App(Base):
     pipeline_step = Column(String, default="pending")
     pr_url = Column(String, nullable=True)
     pr_number = Column(Integer, nullable=True)
+    autofix_pr_url = Column(String, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 

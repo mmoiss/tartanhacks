@@ -191,8 +191,8 @@ IMPORTANT: Every commit message you create MUST start with "[Sanos]". For exampl
 
 IMPORTANT: After creating the PR, output the PR URL on its own line in this exact format (no other text on the line):
 SANOS_PR=https://github.com/{repo_owner}/{repo_name}/pull/NUMBER
-Replace NUMBER with the actual PR number. Example:
-SANOS_PR=https://github.com/{repo_owner}/{repo_name}/pull/42
+
+Replace NUMBER with the ACTUAL PR number you just created (do NOT use a placeholder or example number).
 """
 
         try:
