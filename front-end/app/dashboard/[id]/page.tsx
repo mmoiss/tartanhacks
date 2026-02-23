@@ -200,50 +200,50 @@ function StepCard({
   children?: React.ReactNode;
 }) {
   const borderColor = {
-    waiting: "border-white/15",
-    active: "border-yellow-500/30 shadow-[0_0_15px_rgba(234,179,8,0.05)]",
-    complete: "border-white/5",
-    error: "border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.05)]",
+    waiting: "border-white/[0.06]",
+    active: "border-white/[0.1]",
+    complete: "border-white/[0.04]",
+    error: "border-red-500/20",
   }[state];
 
   const bgColor = {
-    waiting: "bg-white/[0.05]",
-    active: "bg-yellow-500/[0.08]",
-    complete: "bg-white/[0.02]",
-    error: "bg-red-500/[0.08]",
+    waiting: "bg-white/[0.01]",
+    active: "bg-white/[0.02]",
+    complete: "bg-white/[0.01]",
+    error: "bg-red-500/[0.03]",
   }[state];
 
-  const textColor = state === "complete" ? "text-zinc-600" : "text-white";
+  const textColor = state === "complete" ? "text-zinc-500" : "text-white";
   const iconBg = {
-    waiting: "bg-white/10",
-    active: "bg-yellow-500/20",
-    complete: "bg-zinc-800",
-    error: "bg-red-500/20",
+    waiting: "bg-white/[0.06]",
+    active: "bg-blue-500/15",
+    complete: "bg-white/[0.04]",
+    error: "bg-red-500/15",
   }[state];
 
   const iconColor = {
-    waiting: "text-white/60",
-    active: "text-yellow-400",
+    waiting: "text-zinc-500",
+    active: "text-blue-400",
     complete: "text-zinc-600",
     error: "text-red-400",
   }[state];
 
   return (
-    <div className={`rounded-2xl border ${borderColor} ${bgColor} px-6 py-5 transition-all duration-500 backdrop-blur-sm ${state === "complete" ? "opacity-40" : "opacity-100"}`}>
-      <div className="flex items-center gap-5">
-        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${iconBg} ${iconColor}`}>
+    <div className={`rounded-lg border ${borderColor} ${bgColor} px-5 py-4 transition-all duration-500 ${state === "complete" ? "opacity-50" : "opacity-100"}`}>
+      <div className="flex items-start gap-4">
+        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${iconBg} ${iconColor} mt-0.5`}>
           {state === "complete" ? (
             <Checkmark />
           ) : state === "error" ? (
             <ErrorIcon />
           ) : state === "active" ? (
-            <Spinner className="h-4 w-4" />
+            <Spinner className="h-3.5 w-3.5" />
           ) : (
-            <span className="text-sm font-bold font-accent">{step}</span>
+            <span className="text-xs font-accent">{step}</span>
           )}
         </div>
-        <div className="flex flex-col min-w-0">
-          <h3 className={`text-lg font-semibold tracking-tight ${textColor}`}>{title}</h3>
+        <div className="flex flex-col min-w-0 flex-1">
+          <h3 className={`text-sm font-medium tracking-tight ${textColor}`}>{title}</h3>
           {children && (
             <div className="text-[13px] leading-relaxed transition-colors duration-500 mt-1">
               {children}
@@ -315,14 +315,14 @@ function IncidentRow({
   const isQueued = incident.status === "open";
   const latestAnalysis = incident.analyses?.[0] ?? null;
 
-  const statusLabel: Record<string, { text: string; color: string }> = {
-    open: { text: "Queued", color: "text-zinc-500" },
-    analyzing: { text: "Analyzing", color: "text-yellow-400" },
-    pr_created: { text: "PR Ready", color: "text-blue-400" },
-    resolved: { text: "Resolved", color: "text-emerald-400" },
+  const statusLabel: Record<string, { text: string; dot: string }> = {
+    open: { text: "Queued", dot: "bg-zinc-500" },
+    analyzing: { text: "Analyzing", dot: "bg-yellow-500 animate-pulse" },
+    pr_created: { text: "PR Ready", dot: "bg-blue-500" },
+    resolved: { text: "Resolved", dot: "bg-emerald-500" },
   };
 
-  const st = statusLabel[incident.status] || { text: incident.status, color: "text-zinc-400" };
+  const st = statusLabel[incident.status] || { text: incident.status, dot: "bg-zinc-600" };
 
   async function handleDelete() {
     try {
@@ -348,34 +348,34 @@ function IncidentRow({
   }
 
   return (
-    <div className={`rounded-xl border border-white/5 transition-all duration-200 ${expanded ? "bg-white/10" : "bg-white/[0.02]"} ${isQueued || isResolved ? "opacity-60" : "opacity-100"}`}>
+    <div className={`rounded-lg border transition-all duration-200 ${expanded ? "border-white/[0.1] bg-white/[0.02]" : "border-white/[0.06] bg-white/[0.01]"} ${isQueued || isResolved ? "opacity-50" : "opacity-100"}`}>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full px-6 py-5 text-left"
+        className="w-full px-5 py-4 text-left"
       >
         <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4 min-w-0">
-            <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${isResolved ? "bg-emerald-500" : incident.status === "analyzing" ? "bg-yellow-500 animate-pulse" : incident.status === "pr_created" ? "bg-blue-500" : "bg-zinc-600"}`} />
-            <p className={`text-base truncate ${isResolved || isQueued ? "text-zinc-500" : "text-white"}`}>{incident.error_message}</p>
+          <div className="flex items-center gap-3 min-w-0">
+            <span className={`h-2 w-2 shrink-0 rounded-full ${st.dot}`} />
+            <p className={`text-sm truncate ${isResolved || isQueued ? "text-zinc-500" : "text-white"}`}>{incident.error_message}</p>
           </div>
-          <div className="flex items-center gap-4 shrink-0">
-            <span className={`text-xs font-bold tracking-wider ${st.color}`}>{st.text}</span>
-            <span className="text-sm text-zinc-500">{formatLabel(incident.source)}</span>
+          <div className="flex items-center gap-3 shrink-0">
+            <span className="text-[11px] text-zinc-500 font-accent">{st.text}</span>
+            <span className="text-[11px] text-zinc-600 font-accent">{formatLabel(incident.source)}</span>
             {incident.created_at && !isResolved && (
-              <span className="text-sm text-zinc-500 tabular-nums">
+              <span className="text-[11px] text-zinc-600 tabular-nums font-accent">
                 <LiveDuration startStr={incident.created_at} />
               </span>
             )}
             {isResolved && incident.created_at && incident.resolved_at && (
-              <span className="text-sm text-zinc-500 tabular-nums">
+              <span className="text-[11px] text-zinc-600 tabular-nums font-accent">
                 {formatDuration(incident.created_at, incident.resolved_at)}
               </span>
             )}
             {incident.created_at && (
-              <span className="text-sm text-zinc-600">{timeAgo(incident.created_at)}</span>
+              <span className="text-[11px] text-zinc-600">{timeAgo(incident.created_at)}</span>
             )}
             <svg
-              width="18" height="18"
+              width="14" height="14"
               viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -388,12 +388,12 @@ function IncidentRow({
       </button>
 
       {expanded && (
-        <div className="border-t border-white/5 px-6 py-5 space-y-5">
+        <div className="border-t border-white/[0.04] px-5 py-4 space-y-4">
           {/* Logs section */}
           {incident.logs && (
             <div>
-              <h4 className="text-xs font-bold tracking-wider text-zinc-500 mb-3">Logs</h4>
-              <pre className="text-sm text-zinc-400 bg-white/[0.03] rounded-lg p-4 overflow-x-auto max-h-60 whitespace-pre-wrap">
+              <h4 className="text-[11px] text-zinc-500 mb-2 font-accent">Logs</h4>
+              <pre className="text-xs text-zinc-400 bg-black rounded-md p-3 overflow-x-auto max-h-48 whitespace-pre-wrap border border-white/[0.04] font-mono">
                 {JSON.stringify(incident.logs, null, 2)}
               </pre>
             </div>
@@ -402,8 +402,8 @@ function IncidentRow({
           {/* Stack trace */}
           {incident.stack_trace && (
             <div>
-              <h4 className="text-xs font-bold tracking-wider text-zinc-500 mb-3">Stack Trace</h4>
-              <pre className="text-sm text-zinc-400 bg-white/[0.03] rounded-lg p-4 overflow-x-auto max-h-72 whitespace-pre-wrap">
+              <h4 className="text-[11px] text-zinc-500 mb-2 font-accent">Stack Trace</h4>
+              <pre className="text-xs text-zinc-400 bg-black rounded-md p-3 overflow-x-auto max-h-56 whitespace-pre-wrap border border-white/[0.04] font-mono">
                 {incident.stack_trace}
               </pre>
             </div>
@@ -411,40 +411,41 @@ function IncidentRow({
 
           {/* Analysis section */}
           {latestAnalysis && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {latestAnalysis.root_cause && (
-                <div className="bg-white/[0.03] rounded-lg p-4">
-                  <p className="text-xs font-bold tracking-wider text-zinc-600 mb-2">Root Cause</p>
-                  <p className="text-sm text-zinc-300">{latestAnalysis.root_cause}</p>
+                <div className="bg-black rounded-md p-3 border border-white/[0.04]">
+                  <p className="text-[11px] text-zinc-500 mb-1.5 font-accent">Root Cause</p>
+                  <p className="text-sm text-zinc-300 leading-relaxed">{latestAnalysis.root_cause}</p>
                 </div>
               )}
 
               {latestAnalysis.pr_url && incident.status === "resolved" && (
-                <div className="flex items-center gap-4 pt-1">
-                  <a
-                    href={latestAnalysis.pr_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-emerald-400 underline hover:text-emerald-300 transition-colors"
-                  >
-                    View Merged PR #{latestAnalysis.pr_number}
-                  </a>
-                </div>
+                <a
+                  href={latestAnalysis.pr_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
+                >
+                  View Merged PR #{latestAnalysis.pr_number}
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </a>
               )}
             </div>
           )}
 
           {/* Analyzing spinner */}
           {incident.status === "analyzing" && !latestAnalysis && (
-            <div className="flex items-center gap-4 py-2">
-              <Spinner className="h-5 w-5 text-yellow-400" />
-              <span className="text-sm text-yellow-400">Analyzing incident and preparing fix...</span>
+            <div className="flex items-center gap-3 py-1">
+              <Spinner className="h-4 w-4 text-yellow-500" />
+              <span className="text-sm text-zinc-400">Analyzing incident and preparing fix...</span>
             </div>
           )}
 
           {/* Action bar */}
-          <div className="flex items-center pt-3 border-t border-white/5">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center pt-3 border-t border-white/[0.04]">
+            <div className="flex items-center gap-2">
               {latestAnalysis?.pr_url && incident.status === "pr_created" && (
                 <>
                   <a
@@ -452,14 +453,14 @@ function IncidentRow({
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="px-6 py-2.5 text-xs tracking-wider rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors font-accent"
+                    className="px-3.5 py-1.5 text-[13px] rounded-md bg-white text-black transition-colors hover:bg-zinc-200 font-accent"
                   >
                     Review PR #{latestAnalysis.pr_number}
                   </a>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleResolve(); }}
                     disabled={resolving}
-                    className="px-6 py-2.5 text-xs tracking-wider rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors disabled:opacity-50 font-accent"
+                    className="px-3.5 py-1.5 text-[13px] rounded-md border border-white/[0.08] text-zinc-400 transition-colors hover:text-white hover:border-white/[0.15] disabled:opacity-50 font-accent"
                   >
                     {resolving ? "Merging..." : "Accept PR"}
                   </button>
@@ -471,8 +472,8 @@ function IncidentRow({
               className="ml-auto text-zinc-600 hover:text-red-400 transition-colors p-1"
               title="Delete incident"
             >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
           </div>
@@ -637,7 +638,6 @@ function BuildPage() {
   useEffect(() => {
     if (!token || !app) return;
     const pipeline = app.pipeline_step;
-    // Poll during pending/integrating, or show final logs for other states
     const shouldPoll = pipeline === "pending" || pipeline === "integrating";
 
     const fetchDedalusLogs = async () => {
@@ -724,10 +724,10 @@ function BuildPage() {
 
   if (error) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#09090b] gap-4">
-        <p className="text-sm font-bold tracking-wider text-red-500">{error}</p>
-        <button onClick={() => router.push("/dashboard")} className="text-xs tracking-widest text-zinc-400 hover:text-white transition-colors underline font-accent">
-          Back
+      <div className="flex min-h-screen flex-col items-center justify-center bg-black gap-4">
+        <p className="text-sm text-red-500">{error}</p>
+        <button onClick={() => router.push("/dashboard")} className="text-xs text-zinc-400 hover:text-white transition-colors underline font-accent">
+          Back to dashboard
         </button>
       </div>
     );
@@ -735,8 +735,8 @@ function BuildPage() {
 
   if (!app) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#09090b]">
-        <Spinner className="h-5 w-5 text-zinc-400" />
+      <div className="flex min-h-screen items-center justify-center bg-black">
+        <Spinner className="h-5 w-5 text-zinc-600" />
       </div>
     );
   }
@@ -766,46 +766,44 @@ function BuildPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#09090b] font-sans animate-in fade-in duration-1000">
-      <div className="mx-auto w-full max-w-[1100px] px-8 py-12 sm:px-12 lg:px-16">
-        {/* Back link */}
-        <button
-          onClick={() => router.push("/dashboard")}
-          className="flex items-center gap-2 text-sm tracking-widest text-zinc-400 hover:text-white transition-colors mb-12 font-accent"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Back
-        </button>
-
-        {/* App name */}
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="text-3xl font-bold text-white tracking-tight">{app.full_name}</h1>
-          <div className="flex items-center gap-2">
-            <span className="shrink-0 rounded-full px-4 py-1 text-[11px] tracking-widest bg-white/20 text-white/80 border border-white/10 font-accent">
-              App ID: {app.id}
+    <div className="min-h-screen bg-black font-sans">
+      {/* Top navigation bar — matches dashboard */}
+      <nav className="border-b border-white/[0.06]">
+        <div className="mx-auto w-full max-w-[1200px] px-6">
+          <div className="flex h-16 items-center">
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Back
+            </button>
+            <span className="text-sm text-zinc-600 mx-3">/</span>
+            <span className="text-sm text-white">{app.full_name}</span>
+            <span className="ml-3 rounded px-2 py-0.5 text-[10px] text-zinc-500 border border-white/[0.06] font-accent">
+              ID: {app.id}
             </span>
           </div>
         </div>
-        <p className="text-xs text-zinc-400 tracking-[0.05em] mb-12 font-accent">
-          Project Deployment & Monitoring
-        </p>
+      </nav>
 
+      <main className="mx-auto w-full max-w-[1200px] px-6 py-8">
         {/* Tabs */}
-        <div className="flex gap-1 mb-10 border-b border-white/10">
+        <div className="flex gap-0 mb-8 border-b border-white/[0.06]">
           {tabs.map((t) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`px-6 py-3 text-[10px] font-medium tracking-widest transition-all relative flex items-center gap-2 ${tab === t.key
+              className={`px-4 py-3 text-sm transition-all relative flex items-center gap-2 ${tab === t.key
                 ? "text-white"
-                : "text-zinc-400 hover:text-zinc-200"
+                : "text-zinc-500 hover:text-zinc-300"
                 }`}
             >
               {t.label}
               {t.count !== undefined && t.count > 0 && (
-                <span className="text-xs font-bold text-red-400 leading-none self-center">
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500/15 px-1.5 text-[11px] text-red-400 leading-none">
                   {t.count}
                 </span>
               )}
@@ -818,23 +816,23 @@ function BuildPage() {
 
         {/* Tab content */}
         {tab === "setup" && (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             <StepCard step={1} title="Integrating Error Listeners" state={card1}>
               {card1 === "active" && (
-                <p className="text-zinc-300">
+                <p className="text-zinc-400 text-sm">
                   Creating instrumentation files and opening a PR on your repository...
                 </p>
               )}
               {card1 === "complete" && (
-                <p className="text-zinc-500">Instrumentation PR created.</p>
+                <p className="text-zinc-600 text-sm">Instrumentation PR created.</p>
               )}
               {card1 === "error" && (
-                <p className="text-red-400">
+                <p className="text-red-400 text-sm">
                   Failed to create instrumentation PR. You can retry by refreshing the page.
                 </p>
               )}
               {card1 === "waiting" && (
-                <p className="text-zinc-400">Wait for instrumentation to begin.</p>
+                <p className="text-zinc-500 text-sm">Waiting for instrumentation to begin.</p>
               )}
               {(card1 === "active" || dedalusLogs.length > 0) && (
                 <LogWindow
@@ -853,37 +851,36 @@ function BuildPage() {
                     href={app.pr_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-zinc-300 underline hover:text-white transition-colors"
+                    className="text-sm text-zinc-400 underline hover:text-white transition-colors"
                   >
                     Review and merge the PR to continue.
                   </a>
                 ) : (
-                  <p className="text-zinc-300">Review and merge the PR to continue.</p>
+                  <p className="text-sm text-zinc-400">Review and merge the PR to continue.</p>
                 )
               )}
               {card2 === "complete" && (
-                <p className="text-zinc-500">PR merged successfully.</p>
+                <p className="text-sm text-zinc-600">PR merged successfully.</p>
               )}
               {card2 === "waiting" && (
-                <p className="text-zinc-400">Pending instrumentation...</p>
+                <p className="text-sm text-zinc-500">Pending instrumentation...</p>
               )}
             </StepCard>
 
             <StepCard step={3} title="Vercel Deployment" state={card3}>
               {card3 === "active" && (
-                <p className="text-zinc-300">
+                <p className="text-sm text-zinc-400">
                   Deploying to Vercel... This usually takes 30-90 seconds.
                 </p>
               )}
               {card3 === "complete" && (
-                <p className="text-zinc-500 mb-2">
-                  Deployment complete.</p>
+                <p className="text-sm text-zinc-600">Deployment complete.</p>
               )}
               {card3 === "error" && (
-                <p className="text-red-400">Deployment failed. Check Vercel for details.</p>
+                <p className="text-sm text-red-400">Deployment failed. Check Vercel for details.</p>
               )}
               {card3 === "waiting" && (
-                <p className="text-zinc-400">Wait for integration to complete.</p>
+                <p className="text-sm text-zinc-500">Waiting for integration to complete.</p>
               )}
               {(card3 === "active" || vercelLogs.length > 0) && (
                 <LogWindow
@@ -898,14 +895,19 @@ function BuildPage() {
         )}
 
         {tab === "incidents" && (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             {!incidentsLoaded ? (
-              <div className="flex justify-center py-12">
-                <Spinner className="h-5 w-5 text-zinc-400" />
+              <div className="flex justify-center py-16">
+                <Spinner className="h-5 w-5 text-zinc-600" />
               </div>
             ) : sortedIncidents.length === 0 ? (
-              <div className="py-12 text-center">
-                <p className="text-sm text-zinc-400">No incidents detected.</p>
+              <div className="flex flex-col items-center justify-center py-16 gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-dashed border-white/[0.08]">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-zinc-600">
+                    <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <p className="text-sm text-zinc-500">No incidents detected</p>
               </div>
             ) : (
               sortedIncidents.map((inc) => (
@@ -921,7 +923,7 @@ function BuildPage() {
             )}
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }
